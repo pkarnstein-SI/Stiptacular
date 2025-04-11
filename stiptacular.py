@@ -7,8 +7,68 @@ from shapely.geometry import Polygon, LineString, MultiPoint
 import math
 from random import random
 from PseudoHilbert.PseudoHilbert import PseudoHilbert
-import svgwrite
+import svgwrite #TODO: replace with a different library
+import argparse
+from rich_argparse import RichHelpFormatter
+import pymupdf
+from svglib import svglib
+from reportlab.graphics import renderPDF
+from rich.progress import track
+from rich.text import Text
+from rich.console import Console
+import matplotlib, re
 
+parser = argparse.ArgumentParser(prog='python stiptacular.py',
+                    description='Stiptacular: B&W stippling helper',
+                    formatter_class=RichHelpFormatter)
+
+parser.add_argument('filename', type=str)           # positional argument
+parser.add_argument('-n', '--npoints', type=int)      # option that takes a value
+parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
+
+args = parser.parse_args()
+
+# https://gist.github.com/pv/8036995
+image_filename = args.filename
+number_of_points = args.npoints
+dot_radius = 2
+non_dithering_iterations = 5
+dithering_iterations = 5
+
+# Makes white areas whiter, dark areas darker. One is neutral
+adjustment_parameter = 3
+
+#big shiny banner
+cmap = matplotlib.colormaps["Blues_r"]
+
+banner=r""" 
+ ______   _________  ________  ______   _________  ________   ______   __  __   __       ________   ______       
+/_____/\ /________/\/_______/\/_____/\ /________/\/_______/\ /_____/\ /_/\/_/\ /_/\     /_______/\ /_____/\      
+\::::_\/_\__.::.__\/\__.::._\/\:::_ \ \\__.::.__\/\::: _  \ \\:::__\/ \:\ \:\ \\:\ \    \::: _  \ \\:::_ \ \     
+ \:\/___/\  \::\ \     \::\ \  \:(_) \ \  \::\ \   \::(_)  \ \\:\ \  __\:\ \:\ \\:\ \    \::(_)  \ \\:(_) ) )_   
+  \_::._\:\  \::\ \    _\::\ \__\: ___\/   \::\ \   \:: __  \ \\:\ \/_/\\:\ \:\ \\:\ \____\:: __  \ \\: __ `\ \  
+    /____\:\  \::\ \  /__\::\__/\\ \ \      \::\ \   \:.\ \  \ \\:\_\ \ \\:\_\:\ \\:\/___/\\:.\ \  \ \\ \ `\ \ \ 
+    \_____\/   \__\/  \________\/ \_\/       \__\/    \__\/\__\/ \_____\/ \_____\/ \_____\/ \__\/\__\/ \_\/ \_\/ """
+
+
+length = max([len(a) for a in banner.split("\n")])
+# print(length)
+gradient = np.linspace(0, 1, length)
+
+newbanner = Text("")
+for line in [a for a in banner.split("\n") if a!=""]:
+     newline = Text("")
+     for (i,chr) in enumerate([a for a in re.split(r"(.)", line) if a!='']):
+          colorhex = matplotlib.colors.rgb2hex(cmap(gradient[i])) 
+          newline.append(f"{chr}", style=f"{colorhex}")
+     newbanner.append(newline)
+     newbanner.append(Text("\n"))
+
+console = Console(color_system="truecolor")
+
+console.print(newbanner)
+# console.print("\n")
+console.print("[none](...is a very slow program, please be patient)".center(length, " ") )
 
 # restrict a number so that it is between two other numbers
 def clamp(n, smallest, largest):
@@ -197,22 +257,12 @@ def polygon_intersect_y(poly, y_val):
     intersection_coordinates = []
 
     if isinstance(intersection_points, MultiPoint):
-        for intersection_point in intersection_points:
+        for intersection_point in intersection_points.geoms:
             point_coordinates_list = list(intersection_point.coords)[0]
             intersection_coordinates.append(point_coordinates_list)
 
     return intersection_coordinates
 
-
-# https://gist.github.com/pv/8036995
-image_filename = "graceKelly.jpg"
-number_of_points = 30000
-dot_radius = 0.5
-non_dithering_iterations = 5
-dithering_iterations = 5
-
-# Makes white areas whiter, dark areas darker. One is neutral
-adjustment_parameter = 3
 
 # Load an image and convert it to grayscale
 input_image = load_image(image_filename)
@@ -272,12 +322,16 @@ point_coordinates = pseudo_hilbert_reflected_swapped[index_of_points]
 
 # Print properties
 point_area = len(point_coordinates) * math.pi * dot_radius * dot_radius
-print("Selected number of points", number_of_points)
-print("Point Radius", dot_radius)
-print("Number of points generated", len(point_coordinates))
-print("Total Point Area", point_area)
-print("Total sum of all pixels in image ", image_sum)
-print("Sum of pixels divided by number of points", amount_per_point)
+
+if args.verbose:
+    print("")
+    console.log("Selected number of points", number_of_points)
+    console.log("Point Radius", dot_radius)
+    console.log("Number of points generated", len(point_coordinates))
+    console.log("Total Point Area", point_area)
+    console.log("Total sum of all pixels in image ", image_sum)
+    console.log("Sum of pixels divided by number of points", amount_per_point)
+    print("")
 
 # Move points to centre of pixels and create the StipleConverger
 new_point_coordinates = point_coordinates[:, [1, 0]] + 0.5
@@ -290,7 +344,7 @@ dither_amount = 0.3
 
 # Iterate the points and dither them after each step.  This helps with
 # dispersion of the points
-for _ in range(non_dithering_iterations):
+for _ in track(range(non_dithering_iterations), description="Iterating points...".rjust(23," ")):
     image_stippler.iterate()
     for point_to_dither in image_stippler.points:
         x = point_to_dither[0]
@@ -302,7 +356,7 @@ for _ in range(non_dithering_iterations):
     coordinate_history.append(image_stippler.points)
 
 # Iterate the points without the dithering step to converge to a final location
-for _ in range(dithering_iterations):
+for _ in track(range(dithering_iterations), description="Dithering Iterations...".rjust(23," ")):
     image_stippler.iterate()
     coordinate_history.append(image_stippler.points)
 
@@ -315,7 +369,7 @@ coordinate_paths = [[[point[0] + 0.0, point[1] + 0.0]for point in path] for
 
 # Create the dots for the SVG image
 dots = []
-for _ in range(len(coordinate_paths)):
+for _ in track(range(len(coordinate_paths)), description="Thinking about dots...".rjust(23," ")):
     back_circle = diagram.dwg.add(diagram.dwg.circle(r=dot_radius,
                                                      fill="rgb(" +
                                                           str(0) + "," +
@@ -325,15 +379,19 @@ for _ in range(len(coordinate_paths)):
     dots.append(back_circle)
 
 # position the dots
-for path in range(len(coordinate_paths)):
+for path in track(range(len(coordinate_paths)), description="Plotting dots...".rjust(23," ")):
     dots[path]['cx'] = coordinate_paths[path][-1][0]
     dots[path]['cy'] = coordinate_paths[path][-1][1]
 
-# save the output with the background
-diagram.dwg.filename = 'stippled_with_image.svg'
-diagram.dwg.save()
 
-# save the output without the background
+# save the output
 background_image['display'] = 'none'
 diagram.dwg.filename = 'stippled.svg'
 diagram.dwg.save()
+
+drawing = svglib.svg2rlg(path="stippled.svg")
+pdf = renderPDF.drawToString(drawing)
+
+doc = pymupdf.Document(stream=pdf)
+pix = doc.load_page(0).get_pixmap(alpha=True, dpi=300)
+pix.save("stippled.png")
