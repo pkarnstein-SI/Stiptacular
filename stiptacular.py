@@ -4,6 +4,7 @@ import PIL.ImageOps
 import numpy as np
 from scipy.spatial import Voronoi
 from shapely.geometry import Polygon, LineString, MultiPoint
+from shapely import polygonize
 import math
 from random import random
 from PseudoHilbert.PseudoHilbert import PseudoHilbert
@@ -31,8 +32,8 @@ args = parser.parse_args()
 # https://gist.github.com/pv/8036995
 image_filename = args.filename
 number_of_points = args.npoints
-dot_radius = 2
-non_dithering_iterations = 5
+dot_radius = 0.5
+non_dithering_iterations = 3
 dithering_iterations = 5
 
 # Makes white areas whiter, dark areas darker. One is neutral
@@ -68,7 +69,7 @@ console = Console(color_system="truecolor")
 
 console.print(newbanner)
 # console.print("\n")
-console.print("[none](...is a very slow program, please be patient)".center(length, " ") )
+console.print("[none](...is a VERY slow program, please be patient)".center(length, " ") )
 
 # restrict a number so that it is between two other numbers
 def clamp(n, smallest, largest):
@@ -180,15 +181,20 @@ class StippleConverger:
                         Polygon([tuple(l) for l in vertex_coordinates])
                     masked_polygon = self.mask_polygon.intersection(
                         region_polygon)
+                    
+                    if type(masked_polygon)==LineString:
+                        continue
+                    
                     bounds = masked_polygon.bounds
-
+                    
                     denominator_sum = np.int64(0)
                     x_coord_sum = np.int64(0)
                     y_coord_sum = np.int64(0)
-                    lower_y_bound = int(math.floor(round_up_to_half(bounds[1])))
-                    upper_y_bound = int(math.floor(
-                        round_down_to_half(bounds[3])))
-
+                    try:
+                        lower_y_bound = int(math.floor(round_up_to_half(bounds[1])))
+                        upper_y_bound = int(math.floor(round_down_to_half(bounds[3])))
+                    except ValueError:
+                        continue
                     # Calculate the weighted Centroid for the region
                     # The process to efficiently calculate the centroid is
                     # explained here
@@ -323,15 +329,30 @@ point_coordinates = pseudo_hilbert_reflected_swapped[index_of_points]
 # Print properties
 point_area = len(point_coordinates) * math.pi * dot_radius * dot_radius
 
+print("")
+
 if args.verbose:
-    print("")
     console.log("Selected number of points", number_of_points)
     console.log("Point Radius", dot_radius)
     console.log("Number of points generated", len(point_coordinates))
     console.log("Total Point Area", point_area)
-    console.log("Total sum of all pixels in image ", image_sum)
+    console.log("Number of pixels in image ", height*width)
+    # console.log("Total sum of all pixels in image ", image_sum)
+    console.log("Fractional coverage by dots ", point_area/(height*width))
     console.log("Sum of pixels divided by number of points", amount_per_point)
-    print("")
+    console.log("")
+
+
+estimatedtime = np.abs(3.13909 - (0.000913413*len(point_coordinates)) + (0.0000000385006*(len(point_coordinates)**2)))
+hours = int(np.floor(estimatedtime/60))
+minutes = int(np.floor(estimatedtime-(hours*60)))
+seconds = int(np.floor((estimatedtime-(hours*60)-minutes)*60))
+if hours>0:
+    console.log(f"[red]Estimated stippling time: {str(hours)} hours, {str(minutes)} minutes.")
+else: 
+    console.log(f"[red]Estimated stippling time: {str(minutes)} minutes, {str(seconds)} seconds.")    
+
+console.log("")
 
 # Move points to centre of pixels and create the StipleConverger
 new_point_coordinates = point_coordinates[:, [1, 0]] + 0.5
