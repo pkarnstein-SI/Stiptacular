@@ -17,32 +17,17 @@ from reportlab.graphics import renderPDF
 from rich.progress import track
 from rich.text import Text
 from rich.console import Console
-import matplotlib, re
+import matplotlib, re, time
 
-parser = argparse.ArgumentParser(prog='python stiptacular.py',
-                    description='Stiptacular: B&W stippling helper',
-                    formatter_class=RichHelpFormatter)
+start_time = time.time()
 
-parser.add_argument('filename', type=str)           # positional argument
-parser.add_argument('-n', '--npoints', type=int)      # option that takes a value
-parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
+console = Console(color_system="truecolor")
 
-args = parser.parse_args()
+def banner(console=console):
+    #big shiny banner
+    cmap = matplotlib.colormaps["Blues_r"]
 
-# https://gist.github.com/pv/8036995
-image_filename = args.filename
-number_of_points = args.npoints
-dot_radius = 0.5
-non_dithering_iterations = 3
-dithering_iterations = 5
-
-# Makes white areas whiter, dark areas darker. One is neutral
-adjustment_parameter = 3
-
-#big shiny banner
-cmap = matplotlib.colormaps["Blues_r"]
-
-banner=r""" 
+    banner=r""" 
  ______   _________  ________  ______   _________  ________   ______   __  __   __       ________   ______       
 /_____/\ /________/\/_______/\/_____/\ /________/\/_______/\ /_____/\ /_/\/_/\ /_/\     /_______/\ /_____/\      
 \::::_\/_\__.::.__\/\__.::._\/\:::_ \ \\__.::.__\/\::: _  \ \\:::__\/ \:\ \:\ \\:\ \    \::: _  \ \\:::_ \ \     
@@ -52,24 +37,22 @@ banner=r"""
     \_____\/   \__\/  \________\/ \_\/       \__\/    \__\/\__\/ \_____\/ \_____\/ \_____\/ \__\/\__\/ \_\/ \_\/ """
 
 
-length = max([len(a) for a in banner.split("\n")])
-# print(length)
-gradient = np.linspace(0, 1, length)
+    length = max([len(a) for a in banner.split("\n")])
+    # print(length)
+    gradient = np.linspace(0, 1, length)
 
-newbanner = Text("")
-for line in [a for a in banner.split("\n") if a!=""]:
-     newline = Text("")
-     for (i,chr) in enumerate([a for a in re.split(r"(.)", line) if a!='']):
-          colorhex = matplotlib.colors.rgb2hex(cmap(gradient[i])) 
-          newline.append(f"{chr}", style=f"{colorhex}")
-     newbanner.append(newline)
-     newbanner.append(Text("\n"))
+    newbanner = Text("")
+    for line in [a for a in banner.split("\n") if a!=""]:
+        newline = Text("")
+        for (i,chr) in enumerate([a for a in re.split(r"(.)", line) if a!='']):
+            colorhex = matplotlib.colors.rgb2hex(cmap(gradient[i])) 
+            newline.append(f"{chr}", style=f"{colorhex}")
+        newbanner.append(newline)
+        newbanner.append(Text("\n"))
 
-console = Console(color_system="truecolor")
-
-console.print(newbanner)
-# console.print("\n")
-console.print("[none](...is a VERY slow program, please be patient)".center(length, " ") )
+    console.print(newbanner)
+    # console.print("\n")
+    console.print("[none](...is a VERY slow program, please be patient)".center(length, " ") )
 
 # restrict a number so that it is between two other numbers
 def clamp(n, smallest, largest):
@@ -270,6 +253,33 @@ def polygon_intersect_y(poly, y_val):
     return intersection_coordinates
 
 
+
+parser = argparse.ArgumentParser(prog='python stiptacular.py',
+                    description='Stiptacular: B&W stippling helper',
+                    formatter_class=RichHelpFormatter)
+
+parser.add_argument('filename', type=str)           # positional argument
+parser.add_argument('-n', '--npoints', type=int)      # option that takes a value
+parser.add_argument('-s', '--size', type=float)      # option that takes a value
+parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
+
+args = parser.parse_args()
+
+# if not args.size:
+#     args.size=sqrt(x/(pi 75000))
+
+# https://gist.github.com/pv/8036995
+image_filename = args.filename
+
+# dot_radius = 2.27
+non_dithering_iterations = 3
+dithering_iterations = 5
+
+# Makes white areas whiter, dark areas darker. One is neutral
+adjustment_parameter = 3
+
+banner() 
+
 # Load an image and convert it to grayscale
 input_image = load_image(image_filename)
 grey_input = PIL.ImageOps.grayscale(input_image)
@@ -292,6 +302,15 @@ image_array = image_array_float.astype('uint16')
 # Generate a PseudoHilbert Curve that spans the image and add the source image
 # to the output.
 height, width = image_array.shape
+
+if args.size: dot_radius = args.size
+else: dot_radius = np.sqrt((width*height)/(np.pi*75000))
+
+if args.npoints: number_of_points = args.npoints
+else:
+   number_of_points=int(round((0.4*height*width)/ (math.pi * (dot_radius**2))))
+
+
 PsH = PseudoHilbert(width, height)
 diagram = Diagram(width, height)
 background_image = diagram.dwg.add(diagram.dwg.image(image_filename,
@@ -416,3 +435,7 @@ pdf = renderPDF.drawToString(drawing)
 doc = pymupdf.Document(stream=pdf)
 pix = doc.load_page(0).get_pixmap(alpha=True, dpi=300)
 pix.save("stippled.png")
+
+end_time = time.time()
+
+console.log(f"\n({str(height*width)}, {len(point_coordinates)}, {str(end_time - start_time)})")

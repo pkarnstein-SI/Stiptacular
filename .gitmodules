@@ -1,6 +1,3 @@
 [submodule "PseudoHilbert"]
 	path = PseudoHilbert
 	url = https://github.com/GrantTrebbin/PseudoHilbert.git
-[submodule "font-classify"]
-	path = font-classify
-	url = https://github.com/Storia-AI/font-classify.git
