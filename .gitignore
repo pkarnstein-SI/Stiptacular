@@ -176,3 +176,9 @@ cython_debug/
 # Generated images
 stippled.png
 stippled.svg
+timing.txt
+font-classify/sample_data/output
+font-classify/sample_data/model
+font-classify/runs
+font-classify/sample_data/fonts
+font-classify/assets
