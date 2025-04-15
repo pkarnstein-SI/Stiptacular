@@ -38,7 +38,7 @@
 
 
 <!-- ABOUT THE PROJECT -->
-![Result](./stippled-example.png)
+![Result](assets/stippled-example.png)
 
 Remember how old scientific papers couldn't print in color in journals, so they did cool stippling and shit?
 
@@ -62,6 +62,12 @@ so anyway I found a project that converts images into stippled b&w and fixed it 
    ```sh
    python -m pip install -r requirements.txt
    ```
+2. Run the setup script
+   ```sh
+   ./setup.sh
+   ```
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -70,7 +76,7 @@ so anyway I found a project that converts images into stippled b&w and fixed it 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-![Runtime](./runtime.png)
+![Runtime](assets/runtime.png)
 
 Will write this later when i'm back on adderall
 
@@ -81,7 +87,7 @@ Will write this later when i'm back on adderall
 <!-- ROADMAP -->
 ## Roadmap
 
-![Result](./stippled-cat.png)
+![Result](assets/stippled-cat.png)
 
 
 - [x] Update for Python3 and Shapely2

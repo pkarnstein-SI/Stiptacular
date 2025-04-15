@@ -18,3 +18,4 @@ python dataset_generation.py 10000 --backgrounds="$ORIGINAL_PWD/font-classify/sa
 echo "\n\033[32;1;4mTraining OCR...\033[0m\n"
 
 python train.py --image_folder="$ORIGINAL_PWD/font-classify/sample_data/output"
+
