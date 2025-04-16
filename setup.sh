@@ -2,7 +2,6 @@ usage() {
     echo "./setup.sh"
     echo "    -h | --help     print this helptext"
     echo "    -t | --train    re-train model (optional)"
-    echo "    -f | --file     custom model file (optional)"
 }
 
 handle_options() {
@@ -14,17 +13,6 @@ handle_options() {
             ;;
         -t | --train)
             train=true
-            ;;
-        -f | --file*)
-            if ! has_argument $@; then
-                echo "File not specified.\n" >&2
-                usage
-                exit 1
-            fi
-
-            model_file=$(extract_argument $@)
-
-            shift
             ;;
         *)
             echo "Invalid option: $1\n" >&2
@@ -58,5 +46,7 @@ if [ "$train" = true ]; then
 
     echo "\n\033[32;1;4mTraining OCR...\033[0m\n"
 
-    python train.py --image_folder="$ORIGINAL_PWD/font-classify/sample_data/output"
+    python train.py --image_folder="$ORIGINAL_PWD/font-classify/sample_data/output" --num_epochs 1000
+
+    echo "\n\033[32;1;4mFinished. Model saved to $ORIGINAL_PWD/font-classify/sample_data/model/\033[0m\n"
 fi
