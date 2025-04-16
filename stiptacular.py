@@ -261,6 +261,7 @@ parser = argparse.ArgumentParser(prog='python stiptacular.py',
 parser.add_argument('filename', type=str)           # positional argument
 parser.add_argument('-n', '--npoints', type=int)      # option that takes a value
 parser.add_argument('-s', '--size', type=float)      # option that takes a value
+parser.add_argument('-o', '--ocr',action='store_true')  # on/off flag
 parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
 
 args = parser.parse_args()

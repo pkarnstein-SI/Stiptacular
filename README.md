@@ -1,35 +1,15 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
-
-
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
+<!---->
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![Unlicense License][license-shield]][license-url]
 
-
-
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <h3 align="center">Stiptacular Next Gen</h3>
+  <h1 align="center">Stiptacular Next Gen</h3>
 
   <p align="center">
     Turn Images Into Stippled B&W
@@ -62,12 +42,35 @@ so anyway I found a project that converts images into stippled b&w and fixed it 
    ```sh
    python -m pip install -r requirements.txt
    ```
-2. Run the setup script
+3. Run the setup script
    ```sh
-   ./setup.sh
+   chmod +x setup.sh && ./setup.sh
    ```
 
+---
 
+### Training your own model
+
+> [!NOTE] 
+> These steps are automated by `setup.sh --train`; the steps below only need to be run manually if you want to change settings
+
+1. Download the fonts you want to train on, and text to train with (the wikipedia training dependency for `font-classify` hasn't been updated in a while and will throw BeautifulSoup errors)
+2. Move to the `font-classify` directory
+   ```sh
+   cd font-classify
+   ```
+3. Generate training data
+    ```sh
+    python dataset_generation.py 10000 \
+      --backgrounds="<<path to background images>>" \
+        --fonts="<<path to downloaded fonts>>" \
+          --textfile="<<path to training text>>" \
+            --text_source="textfile"
+      ```
+4. Train OCR on generated data
+     ```sh
+     python train.py --image_folder="sample_data/output"
+     ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
