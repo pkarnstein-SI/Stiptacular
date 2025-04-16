@@ -27,9 +27,10 @@ handle_options() {
 handle_options "$@"
 
 ORIGINAL_PWD=$(pwd)
+mkdir -p font-classify/sample_data/fonts
 cd font-classify/sample_data/fonts
 
-echo "\n\033[32;1;4mDownloading font files...\033[0m\n"
+echo -e "\n\033[32;1;4mDownloading font files...\033[0m\n"
 
 wget https://github.com/google/fonts/archive/main.zip
 unzip main.zip && rm main.zip
@@ -40,13 +41,13 @@ if [ "$train" = true ]; then
 
     cd $ORIGINAL_PWD
 
-    echo "\n\033[32;1;4mGenerating training data...\033[0m\n"
+    echo -e "\n\033[32;1;4mGenerating training data...\033[0m\n"
 
     python dataset_generation.py 10000 --backgrounds="$ORIGINAL_PWD/font-classify/sample_data/backgrounds" --fonts="$ORIGINAL_PWD/font-classify/sample_data/fonts/fonts-main" --textfile="$ORIGINAL_PWD/font-classify/assets/Les Misérables, v. 1-5: Fantine.txt" --text_source="textfile"
 
-    echo "\n\033[32;1;4mTraining OCR...\033[0m\n"
+    echo -e "\n\033[32;1;4mTraining OCR...\033[0m\n"
 
     python train.py --image_folder="$ORIGINAL_PWD/font-classify/sample_data/output" --num_epochs 1000
 
-    echo "\n\033[32;1;4mFinished. Model saved to $ORIGINAL_PWD/font-classify/sample_data/model/\033[0m\n"
+    echo -e "\n\033[32;1;4mFinished. Model saved to $ORIGINAL_PWD/font-classify/sample_data/model/\033[0m\n"
 fi
