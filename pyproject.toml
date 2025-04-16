@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"] 
+build-backend = "setuptools.build_meta" # If not defined, then legacy behavior can happen
+
+
+[project]
+name = "Stiptacular" # REQUIRED, is the only field that cannot be marked as dynamic.
+version = "2.0.0" # REQUIRED, although can be dynamic
+description = "Making Stiptacular more powerful and user friendly"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE.txt" }
+authors = [{ name = "Persephone Karnstein" }]
+
+
+# This field lists other packages that your project depends on to run.
+# Any package you put here will be installed by pip when your project is
+# installed, so they must be valid existing projects.
+#
+# For an analysis of this field vs pip's requirements files see:
+# https://packaging.python.org/discussions/install-requires-vs-requirements/
+# dependencies = ["peppercorn"]
+
+
+# The following would provide a command line executable called `sample`
+# which executes the function `main` from this package when invoked.
+# [project.scripts]
+# sample = "sample:main"
+
+
+# This is configuration specific to the `setuptools` build backend.
+# If you are using a different build backend, you will need to change this.
+# [tool.setuptools]
+# If there are data files included in your packages that need to be
+# installed, specify them here.
+# package-data = { "sample" = ["*.dat"] }

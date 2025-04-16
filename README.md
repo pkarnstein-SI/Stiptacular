@@ -47,34 +47,7 @@ so anyway I found a project that converts images into stippled b&w and fixed it 
    chmod +x setup.sh && ./setup.sh
    ```
 
----
-
-### Training your own model
-
-> [!NOTE] 
-> These steps are automated by `setup.sh --train`; the steps below only need to be run manually if you want to change settings
-
-1. Download the fonts you want to train on, and text to train with (the wikipedia training dependency for `font-classify` hasn't been updated in a while and will throw BeautifulSoup errors)
-2. Move to the `font-classify` directory
-   ```sh
-   cd font-classify
-   ```
-3. Generate training data
-    ```sh
-    python dataset_generation.py 10000 \
-      --backgrounds="<<path to background images>>" \
-        --fonts="<<path to downloaded fonts>>" \
-          --textfile="<<path to training text>>" \
-            --text_source="textfile"
-      ```
-4. Train OCR on generated data
-     ```sh
-     python train.py --image_folder="sample_data/output"
-     ```
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
@@ -85,6 +58,45 @@ Will write this later when i'm back on adderall
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+
+## Training your own model
+
+> [!NOTE] 
+> These steps are automated by `setup.sh --train`; the steps below only need to be run manually if you want to change settings, or are running on a device (i.e., a macbook) that doesn't support CUDA
+
+1. Download the fonts you want to train on, and text to train with (the wikipedia training dependency for `font-classify` hasn't been updated in a while and will throw BeautifulSoup errors)
+2. Move to the `font-classify` directory
+   ```sh
+   cd font-classify
+   ```
+3. **If you're training on a Apple Silicon Mac**, edit the `device = ` line at the beginning of `font-classify/train.py` to enable mps devices
+   ```diff
+   -     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+   +     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+   ```
+4. **If you're training on a Apple Silicon Mac**, you will also have to edit line 297 of `font-classify/train.py` as shown, as mps cannot handle float64 tensors.
+   ```diff
+      epoch_loss = running_loss / dataset_sizes[phase]
+   -  epoch_acc = running_corrects.double() / dataset_sizes[phase]
+   +  if device.type != "mps":
+   +    epoch_acc = running_corrects.double() / dataset_sizes[phase]
+   +  else:
+   +    epoch_acc = running_corrects.to(torch.float32).to("mps") / dataset_sizes[phase]
+   ```
+5. Generate training data
+    ```sh
+    python dataset_generation.py 10000 \
+      --backgrounds="<<path to background images>>" \
+        --fonts="<<path to downloaded fonts>>" \
+          --textfile="<<path to training text>>" \
+            --text_source="textfile"
+      ```
+6. Train OCR on generated data
+     ```sh
+     python train.py --image_folder="sample_data/output"
+     ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- ROADMAP -->
